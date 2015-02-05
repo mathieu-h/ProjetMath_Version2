@@ -1,23 +1,26 @@
 #include "stdafx.h"
 #include "Edge.h"
+#include "Node.h"
 
 typedef Edge* EdgePtr;
 
 Edge::Edge(void)
 {
-    this->yMin = 0;
-    this->yMax = 0;
-    this->xMin = 0;
-    this->mRev = 0;
+	this->yMin = 0;
+	this->yMax = 0;
+	this->xMin = 0;
+	this->slope = 0;
+	this->yIntercept = 0;
 }
 
 
-Edge::Edge(float yMax, float yMin, float xMin, float mRev)
+Edge::Edge(float yMax, float yMin, float xMin, float slope, float yIntercept)
 {
 	this->yMax = yMax;
-    this->yMin = yMin;
+	this->yMin = yMin;
 	this->xMin = xMin;
-	this->mRev = mRev;
+	this->slope = slope;
+	this->yIntercept = yIntercept;
 }
 
 Edge::~Edge(void)
@@ -26,19 +29,18 @@ Edge::~Edge(void)
 
 std::ostream& operator<<(std::ostream& out, const Edge &e)
 {
-    if(e.isEmpty())
-        out << "empty";
-    else
-    {
-        out << "[ yMax : " << e.getYMax() << " yMin : " << e.getYMin() << " xMin : " << e.getXMin() << " 1/slope : " << 1.0f / e.getMRev() << "] , ";
-
-    }
-    return out;
+	if(e.isEmpty())
+		out << "empty";
+	else
+	{
+		out << "[ yMax : " << e.getYMax() << " yMin : " << e.getYMin() << " xMin : " << e.getXMin() << " slope : " << e.getSlope() << " yIntercept : " << e.getYIntercept() <<  "] , ";
+	}
+	return out;
 }
 
 bool Edge::isEmpty() const
 {
-    return (this->yMax == 0.0f && this->yMin == 0.0f && this->xMin == 0.0f && this->mRev == 0.0f);
+	return (this->yMax == 0.0f && this->yMin == 0.0f && this->xMin == 0.0f && this->slope == 0.0f && this->yIntercept == 0.0f);
 }
 
 float Edge::getYMax() const
@@ -48,7 +50,7 @@ float Edge::getYMax() const
 
 float Edge::getYMin() const
 {
-    return this->yMin;
+	return this->yMin;
 }
 
 float Edge::getXMin() const
@@ -56,9 +58,14 @@ float Edge::getXMin() const
 	return this->xMin;
 }
 
-float Edge::getMRev() const
+float Edge::getSlope() const
 {
-	return this->mRev;
+	return this->slope;
+}
+
+float Edge::getYIntercept() const
+{
+	return this->yIntercept;
 }
 
 void Edge::setYMax(float yMax)
@@ -68,7 +75,7 @@ void Edge::setYMax(float yMax)
 
 void Edge::setYMin(float yMin)
 {
-    this->yMin = yMin;
+	this->yMin = yMin;
 }
 
 void Edge::setXMin(float xMin)
@@ -76,7 +83,12 @@ void Edge::setXMin(float xMin)
 	this->xMin = xMin;
 }
 
-void Edge::setMRev(float mRev)
+void Edge::setSlope(float slope)
 {
-	this->mRev = mRev;
+	this->slope = slope;
+}
+
+void Edge::setYIntercept(float yIntercept)
+{
+	this->yIntercept = yIntercept;
 }

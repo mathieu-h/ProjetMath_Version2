@@ -402,7 +402,8 @@ Node<Edge>* SortLCA(Node<Edge>* list,int (*compare)(Node<Edge>* one,Node<Edge>* 
 		if (!result) {
 			result=next;
 		}else{
-			tail->InsertAfter(next);
+			tail->SetNext(next);
+			//tail->InsertAfter(next);
 		}
 		tail = next;
 	}

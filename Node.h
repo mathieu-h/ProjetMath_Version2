@@ -25,6 +25,7 @@ public:
     Node<T>* DeleteAfter();
     Node<T> * GetNode(const T& item, Node<T>* nextptr = NULL);
 	void ClearNext();
+	void Node<T>::SetNext(Node<T> *p);
 private:
     
     Node<T> * next;
@@ -64,6 +65,12 @@ void Node<T>::InsertAfter(Node<T> *p)
     // now we should link the previous Node to Node<T> *p , i.e the Node that we are
     //inserting after,
     this->next = p;
+}
+
+template<class T>
+void Node<T>::SetNext(Node<T> *p)
+{
+	this->next = p;
 }
 
 template<class T>

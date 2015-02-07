@@ -286,6 +286,8 @@ Node<Edge>* InsertNodesIntoLCA(Node<Edge>* ptrLCA, int i){
 		Node<Edge>* edgeLCA = NULL;
 		Node<Edge>* currentEdgeLCA = NULL;
 		edgeLCA = new Node<Edge>(edgeET->data);
+        float x = (edgeLCA->data.getYMin() - edgeLCA->data.getYIntercept())/(edgeLCA->data.getSlope());
+        edgeLCA->data.setXMin(x);
 		currentEdgeLCA = edgeLCA;
 
 		while(edgeET->NextNode() != NULL)

@@ -25,7 +25,7 @@ public:
     Node<T>* DeleteAfter();
     Node<T> * GetNode(const T& item, Node<T>* nextptr = NULL);
 	void ClearNext();
-	void Node<T>::SetNext(Node<T> *p);
+	void SetNext(Node<T> *p);
 private:
     
     Node<T> * next;

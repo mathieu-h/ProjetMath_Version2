@@ -296,7 +296,7 @@ Node<Edge>* InsertNodesIntoLCA(Node<Edge>* ptrLCA, int i){
 			Node<Edge>* newEdgeLCA = new Node<Edge>(edgeET->data);
 			float x = (newEdgeLCA->data.getYMin() - newEdgeLCA->data.getYIntercept())/(newEdgeLCA->data.getSlope());
 			newEdgeLCA->data.setXMin(x);
-			currentEdgeLCA->InsertAfter(newEdgeLCA);
+			currentEdgeLCA->SetNext(newEdgeLCA);
 			currentEdgeLCA = newEdgeLCA;
 		}
 
@@ -311,7 +311,7 @@ Node<Edge>* InsertNodesIntoLCA(Node<Edge>* ptrLCA, int i){
 			{ 
 				currentNode = currentNode->NextNode();
 			}
-			currentNode->InsertAfter(edgeLCA);
+			currentNode->SetNext(edgeLCA);
 		}
 	}
 	return ptrLCA;
@@ -454,7 +454,7 @@ void FillingLCALoop(CPolygon const &polygon){
 			//currentNode = new Node<Edge>(*ptrLCA);
 			currentNode = ptrLCA;
 			std::vector<Point> vec;
-			while (currentNode){
+			while (currentNode != NULL){
 				//if (parity){
 					Point a(currentNode->data.getXMin(), indexOpenGL);
 					//Point b(currentNode->NextNode()->data.getXMin(), indexOpenGL);
@@ -565,9 +565,11 @@ void DrawPolygon(std::vector<Point> points)
 
 	for (int i = 0; i < fillingPoints.size(); ++i)
 	{
-		for (int j = 0; j < fillingPoints[i].size(); j++){
-			if (j%2==0){
-				draw_line(fillingPoints[i][j], fillingPoints[i][j + 1]);
+		if (fillingPoints[i].size() != 1){
+			for (int j = 0; j < fillingPoints[i].size(); j++){
+				if (j % 2 == 0 && fillingPoints[i].size() > j+1){
+					draw_line(fillingPoints[i][j], fillingPoints[i][j + 1]);
+				}
 			}
 		}
 	}

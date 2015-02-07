@@ -326,7 +326,7 @@ Node<Edge>* RemoveNodesFromLCA(Node<Edge>* ptrLCA, float i){
 	int cpt = 0;
 	while(currentNode != NULL)
 	{
-		if(currentNode->data.getYMax() == i)
+		if (currentNode->data.getYMax() == indexOpenGl)
 		{
 			if(cpt == 0)
 			{
@@ -449,14 +449,16 @@ void FillingLCALoop(CPolygon const &polygon){
 			updateLCA(ptrLCA);
 			ptrLCA = SortLCA(ptrLCA, &compare);
 			float indexOpenGL = convertViewportToOpenGLCoordinate(i/(float)glutGet(GLUT_WINDOW_HEIGHT));
-			Point a(ptrLCA->data.getXMin(), indexOpenGL);
-			Point b(ptrLCA->NextNode()->data.getXMin(), indexOpenGL);
-			std::vector<Point> vec;
-			vec.push_back(a);
-			vec.push_back(b);
-			fillingPoints.push_back(vec);
-
-			std::cout << a << " " << b << std::endl;
+			if (ptrLCA && ptrLCA->NextNode()){
+				Point a(ptrLCA->data.getXMin(), indexOpenGL);
+				Point b(ptrLCA->NextNode()->data.getXMin(), indexOpenGL);
+				std::vector<Point> vec;
+				vec.push_back(a);
+				vec.push_back(b);
+				fillingPoints.push_back(vec);
+				std::cout << a << " " << b << std::endl;
+			}
+			
 		}
 
 	}

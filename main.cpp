@@ -451,15 +451,18 @@ void FillingLCALoop(CPolygon const &polygon){
 			ptrLCA = RemoveNodesFromLCA(ptrLCA, i);
 			ptrLCA = SortLCA(ptrLCA, &compare);
 			float indexOpenGL = convertViewportToOpenGLCoordinate(i/(float)glutGet(GLUT_WINDOW_HEIGHT));
+			//currentNode = new Node<Edge>(*ptrLCA);
 			currentNode = ptrLCA;
 			std::vector<Point> vec;
-			while (currentNode && currentNode->NextNode()){
-				Point a(currentNode->data.getXMin(), indexOpenGL);
-				Point b(currentNode->NextNode()->data.getXMin(), indexOpenGL);					
-				vec.push_back(a);
-				vec.push_back(b);					
-				std::cout << a << " " << b << std::endl;
-				currentNode = currentNode->NextNode();	
+			while (currentNode){
+				//if (parity){
+					Point a(currentNode->data.getXMin(), indexOpenGL);
+					//Point b(currentNode->NextNode()->data.getXMin(), indexOpenGL);
+					vec.push_back(a);
+					//vec.push_back(b);
+					//std::cout << a << " " << b << std::endl;
+					currentNode = currentNode->NextNode();
+				//}
 			}
 			fillingPoints.push_back(vec);
 		}

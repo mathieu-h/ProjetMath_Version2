@@ -365,6 +365,7 @@ Node<Edge>* SortLCA(Node<Edge>* list,int (*compare)(Node<Edge>* one,Node<Edge>* 
 	Node<Edge>*	last  = list;
 	Node<Edge>*	result = NULL;
 	Node<Edge>*	next   = NULL;
+	Node<Edge>*	tail   = NULL;
 
 	// Find halfway through the list (by running two pointers, one at twice the speed of the other).
 	while (temp && temp->NextNode())
@@ -400,14 +401,17 @@ Node<Edge>* SortLCA(Node<Edge>* list,int (*compare)(Node<Edge>* one,Node<Edge>* 
 		}		
 		if (!result) {
 			result=next;
+		}else{
+			tail->InsertAfter(next);
 		}
+		tail = next;
 	}
 	return result;
 }
 
 int compare(Node<Edge>* one, Node<Edge>* two){
-	int firstX = one->data.getXMin();
-	int secondX = one->data.getXMin();
+	float firstX = one->data.getXMin();
+	float secondX = two->data.getXMin();
 	if(firstX < secondX){
 		return -1;
 	}
@@ -440,9 +444,9 @@ void FillingLCALoop(CPolygon const &polygon){
 		ptrLCA = InsertNodesIntoLCA(ptrLCA, i);
 		if(ptrLCA != NULL){
 
-			ptrLCA = RemoveNodesFromLCA(ptrLCA, i);
-			//ptrLCA = SortLCA(ptrLCA, &compare);
+			ptrLCA = RemoveNodesFromLCA(ptrLCA, i);			
 			updateLCA(ptrLCA);
+			ptrLCA = SortLCA(ptrLCA, &compare);
 			float indexOpenGL = convertViewportToOpenGLCoordinate(i/(float)glutGet(GLUT_WINDOW_HEIGHT));
 			Point a(ptrLCA->data.getXMin(), indexOpenGL);
 			Point b(ptrLCA->NextNode()->data.getXMin(), indexOpenGL);

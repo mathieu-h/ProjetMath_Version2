@@ -326,7 +326,7 @@ Node<Edge>* RemoveNodesFromLCA(Node<Edge>* ptrLCA, float i){
 	int cpt = 0;
 	while(currentNode != NULL)
 	{
-		if (currentNode->data.getYMax() == indexOpenGl)
+		if (currentNode->data.getYMax() <= indexOpenGl)
 		{
 			if(cpt == 0)
 			{
@@ -444,9 +444,8 @@ void FillingLCALoop(CPolygon const &polygon){
 	for(int i = 0 ; i < ET.size() ; i++){
 		ptrLCA = InsertNodesIntoLCA(ptrLCA, i);
 		if(ptrLCA != NULL){
-
-			ptrLCA = RemoveNodesFromLCA(ptrLCA, i);			
 			updateLCA(ptrLCA);
+			ptrLCA = RemoveNodesFromLCA(ptrLCA, i);	
 			ptrLCA = SortLCA(ptrLCA, &compare);
 			float indexOpenGL = convertViewportToOpenGLCoordinate(i/(float)glutGet(GLUT_WINDOW_HEIGHT));
 			if (ptrLCA && ptrLCA->NextNode()){

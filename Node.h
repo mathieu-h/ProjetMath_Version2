@@ -50,6 +50,7 @@ Node<T>::Node(const T& item,Node<T>* ptrnext)
 template<class T>
 Node<T>*Node<T>::NextNode()
 {
+	if (this == NULL)	return NULL;
     return this->next;
 }
 

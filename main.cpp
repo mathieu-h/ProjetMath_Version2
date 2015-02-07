@@ -441,29 +441,29 @@ Node<Edge>* updateLCA(Node<Edge>* ptrLCA)
 void FillingLCALoop(CPolygon const &polygon){
 	createEdgeTable(polygon);
 	Node<Edge>* ptrLCA = NULL;
-
+	Node<Edge>* currentNode = NULL;
+	bool parity = 1;
 	int cpt = 0;
 	for(int i = 0 ; i < ET.size() ; i++){
 		ptrLCA = InsertNodesIntoLCA(ptrLCA, i);
 		if(ptrLCA != NULL){
 			updateLCA(ptrLCA);
-			ptrLCA = RemoveNodesFromLCA(ptrLCA, i);	
+			ptrLCA = RemoveNodesFromLCA(ptrLCA, i);
 			ptrLCA = SortLCA(ptrLCA, &compare);
 			float indexOpenGL = convertViewportToOpenGLCoordinate(i/(float)glutGet(GLUT_WINDOW_HEIGHT));
-			if (ptrLCA && ptrLCA->NextNode()){
-				Point a(ptrLCA->data.getXMin(), indexOpenGL);
-				Point b(ptrLCA->NextNode()->data.getXMin(), indexOpenGL);
-				std::vector<Point> vec;
+			currentNode = ptrLCA;
+			std::vector<Point> vec;
+			while (currentNode && currentNode->NextNode()){
+				Point a(currentNode->data.getXMin(), indexOpenGL);
+				Point b(currentNode->NextNode()->data.getXMin(), indexOpenGL);					
 				vec.push_back(a);
-				vec.push_back(b);
-				fillingPoints.push_back(vec);
+				vec.push_back(b);					
 				std::cout << a << " " << b << std::endl;
+				currentNode = currentNode->NextNode();	
 			}
-			
+			fillingPoints.push_back(vec);
 		}
-
 	}
-
 	//ptrLCA = RemoveNodesFromLCA(ptrLCA, j);
 	//ptrLCA = SortLCA(ptrLCA, &compare);
 	//std::cout << ptrLCA;
@@ -562,9 +562,12 @@ void DrawPolygon(std::vector<Point> points)
 
 	for (int i = 0; i < fillingPoints.size(); ++i)
 	{
-		draw_line(fillingPoints[i][0], fillingPoints[i][1]);
+		for (int j = 0; j < fillingPoints[i].size(); j++){
+			if (j%2==0){
+				draw_line(fillingPoints[i][j], fillingPoints[i][j + 1]);
+			}
+		}
 	}
-
 }
 
 void renderScene()

@@ -219,7 +219,7 @@ void InsertIntoEdgeTable(Node<Edge>* e, int index)
 		while(currentEdge->NextNode() != NULL){
 			currentEdge = currentEdge->NextNode();
 		}
-		currentEdge->InsertAfter(e);
+		currentEdge->SetNext(e);
 	}
 }
 
@@ -642,7 +642,7 @@ void DrawPolygon(std::vector<Point> points)
 	{
         if(fillingPoints[i].size() > 1){
             for (int j = 0; j < fillingPoints[i].size(); j++){
-                if (j%2==0){
+                if (j%2==0 && fillingPoints[i].size() > j+1){
                     draw_line(fillingPoints[i][j], fillingPoints[i][j + 1]);
                 }
             }

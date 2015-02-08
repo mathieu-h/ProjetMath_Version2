@@ -181,15 +181,20 @@ std::vector<std::vector<Point>> fillingPoints;
 
 void draw_line(Point& a, Point& b)
 {
-	glColor3d(0, 0, 0);
-	glBegin(GL_LINES);
-	glVertex2f(a.x_get(),a.y_get());
-	glVertex2f(b.x_get(),b.y_get());
-	glEnd();
+    if(a.y_get() == b.y_get()){
+        glColor3d(0, 0, 0);
+        glBegin(GL_LINES);
+        glVertex2f(a.x_get(),a.y_get());
+        glVertex2f(b.x_get(),b.y_get());
+        glEnd();
+    }
 }
 
 float calculateSlope(Point a, Point b)
 {
+    if(std::fabs(b.x_get() - a.x_get()) < 0.01){
+        return INFINITY;
+    }
 	return (b.y_get() - a.y_get())/(b.x_get() - a.x_get());
 }
 
@@ -265,7 +270,7 @@ void createEdgeTable(CPolygon const &polygon)
 		InsertIntoEdgeTable(node, indexInt);
 	}
 
-	/*for (int i = 0; i < ET.size(); i++) {
+	for (int i = 0; i < ET.size(); i++) {
 		if(!ET[i]->data.isEmpty()){
 			std::cout << i << " : ";
 			Node<Edge>* node = ET[i];
@@ -274,9 +279,9 @@ void createEdgeTable(CPolygon const &polygon)
 				std::cout << node->data;
 				node = node->NextNode();
 			}
-			std::cout << ET[i]->data << std::endl;
+			std::cout << node->data << std::endl;
 		}
-	}*/
+	}
 }
 
 
@@ -285,24 +290,33 @@ Node<Edge>* InsertNodesIntoLCA(Node<Edge>* ptrLCA, int i){
 		Node<Edge>* edgeET = ET[i];
 		Node<Edge>* edgeLCA = NULL;
 		Node<Edge>* currentEdgeLCA = NULL;
-		edgeLCA = new Node<Edge>(edgeET->data);
-        float x = (edgeLCA->data.getYMin() - edgeLCA->data.getYIntercept())/(edgeLCA->data.getSlope());
+        edgeLCA = new Node<Edge>(edgeET->data);
+        float x = edgeET->data.getXMin();
+        if(!std::isinf(edgeLCA->data.getSlope())){
+            x = (edgeLCA->data.getYMin() - edgeLCA->data.getYIntercept())/(edgeLCA->data.getSlope());
+        }
+        if(x < -1 || x > 1){
+            std::cout << "BLA" << std::endl;
+        }
         edgeLCA->data.setXMin(x);
-		currentEdgeLCA = edgeLCA;
-
-		while(edgeET->NextNode() != NULL)
-		{
-			edgeET = edgeET->NextNode();
-			Node<Edge>* newEdgeLCA = new Node<Edge>(edgeET->data);
-			float x = (newEdgeLCA->data.getYMin() - newEdgeLCA->data.getYIntercept())/(newEdgeLCA->data.getSlope());
+        currentEdgeLCA = edgeLCA;
+        
+        while(edgeET->NextNode() != NULL)
+        {
+            edgeET = edgeET->NextNode();
+            Node<Edge>* newEdgeLCA = new Node<Edge>(edgeET->data);
+            float x = edgeET->data.getXMin();
+            if(!std::isinf(newEdgeLCA->data.getSlope())){
+                x = (newEdgeLCA->data.getYMin() - newEdgeLCA->data.getYIntercept())/(newEdgeLCA->data.getSlope());
+            }
 			newEdgeLCA->data.setXMin(x);
-			currentEdgeLCA->InsertAfter(newEdgeLCA);
-			currentEdgeLCA = newEdgeLCA;
+			currentEdgeLCA->SetNext(newEdgeLCA);
+			//currentEdgeLCA = newEdgeLCA;
 		}
 
 		if(ptrLCA == NULL)
 		{			
-			ptrLCA = edgeLCA;
+			ptrLCA = currentEdgeLCA;
 		}
 		else
 		{
@@ -311,7 +325,7 @@ Node<Edge>* InsertNodesIntoLCA(Node<Edge>* ptrLCA, int i){
 			{ 
 				currentNode = currentNode->NextNode();
 			}
-			currentNode->InsertAfter(edgeLCA);
+            currentNode->SetNext(currentEdgeLCA);
 		}
 	}
 	return ptrLCA;
@@ -327,10 +341,11 @@ Node<Edge>* RemoveNodesFromLCA(Node<Edge>* ptrLCA, float i){
 	Node<Edge>* currentNode = ptrLCA;
 	int cpt = 0;
 	while(currentNode != NULL)
-	{
-		if (currentNode->data.getYMax() <= indexOpenGl)
-		{
-			if(cpt == 0)
+    {
+        // || ((currentNode->NextNode() != NULL) && moreThan2 && std::fabs(currentNode->data.getXMin() - currentNode->NextNode()->data.getXMin()) < 0.2)
+        if (currentNode->data.getYMax() <= indexOpenGl/* || ((currentNode->NextNode() != NULL) && moreThan2 && std::fabs(currentNode->data.getXMin() - currentNode->NextNode()->data.getXMin()) < 0.1)*/)
+        {
+            if(cpt == 0)
 			{
 				Node<Edge>* nodeToDelete = previousNode;
 				previousNode = previousNode->NextNode();
@@ -354,6 +369,53 @@ Node<Edge>* RemoveNodesFromLCA(Node<Edge>* ptrLCA, float i){
 	}
 
 	return ptrLCA;
+}
+
+Node<Edge>* RemoveImprecisions(Node<Edge>* ptrLCA){
+    if(ptrLCA == NULL){
+        return ptrLCA;
+    }
+    
+    Node<Edge>* previousNode = ptrLCA;
+    Node<Edge>* currentNode = ptrLCA;
+    int cpt = 0;
+    
+    Node<Edge>* cptNode = ptrLCA;
+    int cptNodes = 0;
+    while(cptNode != NULL){
+        cptNode = cptNode->NextNode();
+        cptNodes++;
+    }
+    
+    while(currentNode != NULL)
+    {
+        bool moreThan2 = (currentNode->NextNode()->NextNode() != NULL);
+        if((currentNode->NextNode() != NULL) && moreThan2 && cptNodes%2 != 0 && std::fabs(currentNode->data.getXMin() - currentNode->NextNode()->data.getXMin()) < 0.01)
+        {
+            if(cpt == 0)
+            {
+                Node<Edge>* nodeToDelete = previousNode;
+                previousNode = previousNode->NextNode();
+                currentNode = previousNode->NextNode();
+                ptrLCA = previousNode;
+                delete nodeToDelete;
+            }
+            else
+            {
+                delete previousNode->DeleteAfter();
+                currentNode = previousNode->NextNode();
+                cpt++;
+            }
+        }
+        else
+        {
+            previousNode = currentNode;
+            currentNode = currentNode->NextNode();
+            cpt++;
+        }
+    }
+    
+    return ptrLCA;
 }
 
 Node<Edge>* SortLCA(Node<Edge>* list,int (*compare)(Node<Edge>* one,Node<Edge>* two))
@@ -447,29 +509,42 @@ void FillingLCALoop(CPolygon const &polygon){
 	for(int i = 0 ; i < ET.size() ; i++){
 		ptrLCA = InsertNodesIntoLCA(ptrLCA, i);
 		if(ptrLCA != NULL){
-			updateLCA(ptrLCA);
+            updateLCA(ptrLCA);
+            ptrLCA = SortLCA(ptrLCA, &compare);
 			ptrLCA = RemoveNodesFromLCA(ptrLCA, i);
-			ptrLCA = SortLCA(ptrLCA, &compare);
-			float indexOpenGL = convertViewportToOpenGLCoordinate(i/(float)glutGet(GLUT_WINDOW_HEIGHT));
-			//currentNode = new Node<Edge>(*ptrLCA);
-			currentNode = ptrLCA;
-			std::vector<Point> vec;
-			while (currentNode){
-				//if (parity){
-					Point a(currentNode->data.getXMin(), indexOpenGL);
-					//Point b(currentNode->NextNode()->data.getXMin(), indexOpenGL);
-					vec.push_back(a);
-					//vec.push_back(b);
-					//std::cout << a << " " << b << std::endl;
-					currentNode = currentNode->NextNode();
-				//}
+            ptrLCA = RemoveImprecisions(ptrLCA);
+            float indexOpenGL = convertViewportToOpenGLCoordinate(i/(float)glutGet(GLUT_WINDOW_HEIGHT));
+            //currentNode = new Node<Edge>(*ptrLCA);
+            currentNode = ptrLCA;
+            std::vector<Point> vec;
+            if(currentNode->NextNode() == NULL){
+                std:cout << "BLAAAA";
+            }
+            while (currentNode){
+                //if (parity){
+                Point a(currentNode->data.getXMin(), indexOpenGL);
+                //Point b(currentNode->NextNode()->data.getXMin(), indexOpenGL);
+                vec.push_back(a);
+                //vec.push_back(b);
+                //std::cout << a << " " << b << std::endl;
+                currentNode = currentNode->NextNode();
+                //}
 			}
 			fillingPoints.push_back(vec);
 		}
-	}
-	//ptrLCA = RemoveNodesFromLCA(ptrLCA, j);
-	//ptrLCA = SortLCA(ptrLCA, &compare);
-	//std::cout << ptrLCA;
+    }
+    for(int i = 0; i < fillingPoints.size() ;++i)
+    {
+        std::cout << i << ": [ " << fillingPoints[i].size() << " ";
+        for (int j = 0; j < fillingPoints[i].size(); j++)
+        {
+            std::cout << fillingPoints[i][j] << " , ";
+        }
+        std::cout << " ] " << std::endl;
+    }
+    //ptrLCA = RemoveNodesFromLCA(ptrLCA, j);
+    //ptrLCA = SortLCA(ptrLCA, &compare);
+    //std::cout << ptrLCA;
 }
 
 
@@ -565,11 +640,13 @@ void DrawPolygon(std::vector<Point> points)
 
 	for (int i = 0; i < fillingPoints.size(); ++i)
 	{
-		for (int j = 0; j < fillingPoints[i].size(); j++){
-			if (j%2==0){
-				draw_line(fillingPoints[i][j], fillingPoints[i][j + 1]);
-			}
-		}
+        if(fillingPoints[i].size() > 1){
+            for (int j = 0; j < fillingPoints[i].size(); j++){
+                if (j%2==0){
+                    draw_line(fillingPoints[i][j], fillingPoints[i][j + 1]);
+                }
+            }
+        }
 	}
 }
 

@@ -23,11 +23,15 @@
 #include <GL/glu.h>
 #endif
 
-float height = 640.0f;
-float width = 640.0f;
+float height = 1200.0f;
+float width = 1200.0f;
 
 CPolygon polygon;
 Window window;
+
+//Menu indentifier
+static int modify = 1 ;
+static int drawMode = 1 ;
 
 #pragma mark Windowing
 #pragma region Windowing
@@ -172,7 +176,7 @@ CPolygon windowing(const CPolygon polygon, const Window window)
 //Active Edge table
 std::vector<Node<Edge>*> AET;
 
-//Edge tabel
+//Edge table
 std::vector<Node<Edge>*> ET;
 
 //Filling points
@@ -562,12 +566,17 @@ void MouseButton(int button, int state, int x, int y)
 		if(state == GLUT_DOWN)
 		{
 			//std::cout << x << " " << y << std::endl;
-			float new_x = convertViewportToOpenGLCoordinate(x/(float)width);
+			float new_x = convertViewportToOpenGLCoordinate(x/(float)glutGet(GLUT_WINDOW_WIDTH));
 
-			float new_y = -convertViewportToOpenGLCoordinate(y/(float)height);
+			float new_y = -convertViewportToOpenGLCoordinate(y/(float)glutGet(GLUT_WINDOW_HEIGHT));
 
-			Point p(new_x, new_y);
-			polygon.addPoint(p);
+            Point p(new_x, new_y);
+            
+            if(drawMode)
+                polygon.addPoint(p);
+            else
+                window.add_point(p);
+            
 			//std::cout << p << std::endl;
 		}
 	}
@@ -575,7 +584,7 @@ void MouseButton(int button, int state, int x, int y)
 	{
 		if(state == GLUT_DOWN)
 		{
-			float index = convertViewportToOpenGLCoordinate(y/(float)height);
+			float index = convertViewportToOpenGLCoordinate(y/(float)glutGet(GLUT_WINDOW_HEIGHT));
 			index = convertOpenGLToViewportCoordinate(index);
 			index *= glutGet(GLUT_WINDOW_HEIGHT);
 
@@ -606,6 +615,7 @@ void update()
 
 void DrawPolygon(std::vector<Point> points)
 {
+    //Polygon
 	glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
 	glColor3d((float)(127.f/255.f), (float)(48.f/255.f), (float)(201.f/255.f));
 
@@ -627,17 +637,34 @@ void DrawPolygon(std::vector<Point> points)
 		glEnd();
 	}
 
+    //Window
 	glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
 	glColor3d(0, 0, 0);
 	glBegin(GL_POLYGON);
 
-	glVertex3f(-0.5, 0.5, 0.0);
-	glVertex3f(0.5, 0.5, 0.0);
-	glVertex3f(0.5, -0.5, 0.0);
-	glVertex3f(-0.5, -0.5, 0.0);
+    points = window.get_points();
+    
+    if(points.size() <= 2){
+        
+        glBegin(GL_LINES);
+        for (std::size_t i = 0; i < points.size()  ; ++i) {
+            glVertex2f(points[i].x_get(), points[i].y_get());
+        }
+        glEnd();
+    }
+    else
+    {
+        glBegin(GL_POLYGON);
+        
+        for (std::size_t i = 0; i < points.size()  ; ++i) {
+            glVertex2f(points[i].x_get(), points[i].y_get());
+        }
+        glEnd();
+    }
 
 	glEnd();
 
+    //LCA filling
 	for (int i = 0; i < fillingPoints.size(); ++i)
 	{
         if(fillingPoints[i].size() > 1){
@@ -650,46 +677,105 @@ void DrawPolygon(std::vector<Point> points)
 	}
 }
 
+void selectDraw(int selection) {
+    switch (selection)
+    {
+        case 11 : drawMode = 1 ;
+            break ;
+        case 12 : drawMode = 0 ;
+            break ;
+    }
+    glutPostRedisplay();
+}
+
+void selectModify(int selection) {
+    switch (selection) {
+        case 1  :
+        case 2  :
+        case 3  : modify = selection ;
+            break ;
+        case 0  : exit(0); }
+    glutPostRedisplay();
+}
+
+void select(int selection) {
+    switch (selection)
+    {
+        case 0  :
+            exit(0);
+    }
+    glutPostRedisplay();
+}
+
 void renderScene()
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glClearColor(1, 1, 1, 1);
-
-
-	//    DrawPolygon(window.get_points());
-	DrawPolygon(polygon.get_points());
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(1, 1, 1, 1);
+    
+    
+    //    DrawPolygon(window.get_points());
+    DrawPolygon(polygon.get_points());
 
 	glutSwapBuffers();
 }
 
+static GLfloat view_rotx = 20.0F ;
+static GLfloat view_roty = 30.0F ;
+static GLfloat view_rotz = 0.0F ;
+
+void key(unsigned char key,int x,int y) {
+    switch ( key ) {
+        case 'z'    : view_rotz += 2.0;
+            break;
+        case 'Z'    : view_rotz -= 2.0;
+            break;
+        case '\033' : exit(0);
+        break ; }
+}
+
+static void special(int k, int x, int y) {
+    switch (k) {
+        case GLUT_KEY_UP    : view_rotx += 2.0;
+            break;
+        case GLUT_KEY_DOWN  : view_rotx -= 2.0;
+            break;
+        case GLUT_KEY_LEFT  : view_roty += 2.0;
+            break;
+        case GLUT_KEY_RIGHT : view_roty -= 2.0;
+        break; }
+    glutPostRedisplay();
+}
+
+
 int main(int argc, char **argv) {
 
-	Point p1(-0.5, 0.5);
-	Point p2(0.5, 0.5);
-	Point p3(0.5, -0.5);
-	Point p4(-0.5, -0.5);
-	Point p5(0.5, 1);
-	Point p6(1, 0.5);
-	Point p7(0.5, 0);
-
-
-	window.add_point(p1);
-	window.add_point(p2);
-	window.add_point(p3);
-	window.add_point(p4);
-
-	// init GLUT and create Window
+    // init GLUT and create Window
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(100,100);
 	glutInitWindowSize(width,height);
 	glutCreateWindow("Projet Math - GLUT");
+    glEnable(GL_LINE_SMOOTH);
 
 	// register callbacks
 	glutDisplayFunc(renderScene);
 	glutMouseFunc (MouseButton);
 	glutIdleFunc(update);
 	glutKeyboardFunc(keyPressed);
+    
+    int drawMenu = glutCreateMenu(selectDraw);
+    glutAddMenuEntry("Polygon",11);
+    glutAddMenuEntry("Window",12);
+    int modifyMenu = glutCreateMenu(selectModify);
+    glutAddMenuEntry("Windowing",1);
+    glutAddMenuEntry("Filling",2);
+    glutCreateMenu(select);
+    glutAddSubMenu("Draw",drawMenu);
+    glutAddSubMenu("Modify",modifyMenu);
+    glutAddMenuEntry("Quitter",0);
+    glutAttachMenu(GLUT_RIGHT_BUTTON);
+    //glutKeyboardFunc(key);
+    glutSpecialFunc(special);
 
 	// enter GLUT event processing cycle
 	glutMainLoop();

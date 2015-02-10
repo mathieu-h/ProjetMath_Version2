@@ -32,7 +32,7 @@ public:
     
     void set_name(std::string name);
     void set_points(std::vector<Point> points);
-    
+	void clearPoints();
     void add_point(Point &p);
     
     

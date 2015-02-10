@@ -23,8 +23,8 @@
 #include <GL/glu.h>
 #endif
 
-float height = 1200.0f;
-float width = 1200.0f;
+float height = 640.0f;
+float width = 640.0f;
 
 CPolygon polygon;
 Window window;
@@ -130,7 +130,6 @@ CPolygon windowing(const CPolygon polygon, const Window window)
 		polygonNew.clearPoints();
 		for (std::size_t j = 0; j <= points_polygon.size()-1; ++j)
 		{
-
 			if(j > 0)
 			{
 				try {
@@ -158,7 +157,6 @@ CPolygon windowing(const CPolygon polygon, const Window window)
 
 			}
 		}
-
 		points_polygon = polygonNew.get_points();
 
 	}
@@ -537,7 +535,7 @@ void FillingLCALoop(CPolygon const &polygon){
 			fillingPoints.push_back(vec);
 		}
     }
-    for(int i = 0; i < fillingPoints.size() ;++i)
+    /*for(int i = 0; i < fillingPoints.size() ;++i)
     {
         std::cout << i << ": [ " << fillingPoints[i].size() << " ";
         for (int j = 0; j < fillingPoints[i].size(); j++)
@@ -545,7 +543,7 @@ void FillingLCALoop(CPolygon const &polygon){
             std::cout << fillingPoints[i][j] << " , ";
         }
         std::cout << " ] " << std::endl;
-    }
+    }*/
     //ptrLCA = RemoveNodesFromLCA(ptrLCA, j);
     //ptrLCA = SortLCA(ptrLCA, &compare);
     //std::cout << ptrLCA;
@@ -557,7 +555,12 @@ void FillingLCALoop(CPolygon const &polygon){
 #pragma mark GLUT
 #pragma region GLUT
 
-
+void clearAll()
+{
+	polygon.clearPoints();
+	window.clearPoints();
+	fillingPoints.clear();
+}
 
 void MouseButton(int button, int state, int x, int y)
 {
@@ -601,7 +604,7 @@ void keyPressed(unsigned char key, int x, int y)
 		polygon = p;
 	}else if(key == 'c')
 	{
-		polygon.clearPoints();
+		clearAll();
 	}else if(key == 'f')
 	{
 		FillingLCALoop(polygon);
@@ -689,18 +692,27 @@ void selectDraw(int selection) {
 }
 
 void selectModify(int selection) {
+	CPolygon p;
     switch (selection) {
         case 1  :
+			p = windowing(polygon, window);
+			polygon = p;
+			break;
         case 2  :
-        case 3  : modify = selection ;
+			FillingLCALoop(polygon);
             break ;
-        case 0  : exit(0); }
+        case 0  :
+			exit(0); 
+	}
     glutPostRedisplay();
 }
 
 void select(int selection) {
     switch (selection)
-    {
+	{
+		case 3:
+			clearAll();
+			break;
         case 0  :
             exit(0);
     }
@@ -722,16 +734,6 @@ void renderScene()
 static GLfloat view_rotx = 20.0F ;
 static GLfloat view_roty = 30.0F ;
 static GLfloat view_rotz = 0.0F ;
-
-void key(unsigned char key,int x,int y) {
-    switch ( key ) {
-        case 'z'    : view_rotz += 2.0;
-            break;
-        case 'Z'    : view_rotz -= 2.0;
-            break;
-        case '\033' : exit(0);
-        break ; }
-}
 
 static void special(int k, int x, int y) {
     switch (k) {
@@ -755,7 +757,7 @@ int main(int argc, char **argv) {
 	glutInitWindowPosition(100,100);
 	glutInitWindowSize(width,height);
 	glutCreateWindow("Projet Math - GLUT");
-    glEnable(GL_LINE_SMOOTH);
+    //glEnable(GL_LINE_SMOOTH);
 
 	// register callbacks
 	glutDisplayFunc(renderScene);
@@ -772,6 +774,7 @@ int main(int argc, char **argv) {
     glutCreateMenu(select);
     glutAddSubMenu("Draw",drawMenu);
     glutAddSubMenu("Modify",modifyMenu);
+	glutAddMenuEntry("Clear", 3);
     glutAddMenuEntry("Quitter",0);
     glutAttachMenu(GLUT_RIGHT_BUTTON);
     //glutKeyboardFunc(key);

@@ -56,6 +56,11 @@ void Window::add_point(Point &p)
     this->points.push_back(p);
 }
 
+void Window::clearPoints()
+{
+	this->points.clear();
+}
+
 std::ostream& operator<<(std::ostream& out, const Window &w)
 {
     for (std::size_t i = 0; i < w.get_points().size(); ++i) {

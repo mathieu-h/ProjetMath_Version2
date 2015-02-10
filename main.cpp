@@ -26,7 +26,8 @@
 float height = 640.0f;
 float width = 640.0f;
 
-CPolygon polygon;
+int currentPolygon = 0;
+std::vector<CPolygon> polygons;
 Window window;
 
 //Menu indentifier
@@ -117,52 +118,70 @@ bool visible(Point lastPointPoly, Point currentPointWindow, Point nextPointWindo
 	return dot_product >= 0;
 }
 
-CPolygon windowing(const CPolygon polygon, const Window window)
+std::vector<CPolygon> windowing(const std::vector<CPolygon> polygons, const Window window)
 {
-	std::vector<Point> points_polygon = polygon.get_points();
 	std::vector<Point> points_window = window.get_points();
 	points_window.push_back(points_window.front());
 
-	CPolygon polygonNew;
+	std::vector<CPolygon> polygonsNew;
 
-	for (std::size_t i = 0; i < points_window.size() - 1; ++i)
+	for (std::size_t z = 0; z < polygons.size(); ++z)
 	{
-		polygonNew.clearPoints();
-		for (std::size_t j = 0; j <= points_polygon.size()-1; ++j)
+
+		CPolygon polygonNew;
+		std::vector<Point> points_polygon = polygons[z].get_points();
+		if (points_polygon.size() < 3)
+			break;
+
+		for (std::size_t i = 0; i < points_window.size() - 1; ++i)
 		{
-			if(j > 0)
+			polygonNew.clearPoints();
+			for (std::size_t j = 0; j <= points_polygon.size() - 1; ++j)
+			{
+				if (j > 0)
+				{
+					try {
+						Point intersectionPoint = intersection(points_polygon[j - 1], points_polygon[j], points_window[i], points_window[i + 1]);
+						polygonNew.addPoint(intersectionPoint);
+					}
+					catch (int e)
+					{
+
+					}
+				}
+				if (points_polygon.size() == 0)
+				{
+					break;
+				}
+				if (visible(points_polygon[j], points_window[i], points_window[i + 1]))
+				{
+					polygonNew.addPoint(points_polygon[j]);
+				}
+			}
+			if (polygonNew.get_points().size() > 0)
 			{
 				try {
-					Point intersectionPoint = intersection(points_polygon[j-1], points_polygon[j], points_window[i], points_window[i+1]);
+					Point intersectionPoint = intersection(points_polygon[points_polygon.size() - 1], points_polygon[0], points_window[i], points_window[i + 1]);
 					polygonNew.addPoint(intersectionPoint);
 				}
-				catch(int e)
+				catch (int e)
 				{
 
 				}
 			}
-			if(visible(points_polygon[j], points_window[i], points_window[i+1]))
+			if (polygonNew.get_points().size() == 0)
 			{
-				polygonNew.addPoint(points_polygon[j]);
+				break;
 			}
-		}
-		if(polygonNew.get_points().size() > 0)
-		{
-			try {
-				Point intersectionPoint = intersection(points_polygon[points_polygon.size()-1], points_polygon[0], points_window[i], points_window[i+1]);
-				polygonNew.addPoint(intersectionPoint);
-			}
-			catch(int e)
-			{
+			points_polygon = polygonNew.get_points();
 
-			}
 		}
-		points_polygon = polygonNew.get_points();
 
+		polygonsNew.push_back(polygonNew);
+
+		
 	}
-
-	polygonNew.set_points(points_polygon);
-	return polygonNew;
+	return polygonsNew;
 }
 
 #pragma endregion
@@ -184,7 +203,7 @@ std::vector<std::vector<Point>> fillingPoints;
 void draw_line(Point& a, Point& b)
 {
     if(a.y_get() == b.y_get()){
-        glColor3d(0, 0, 0);
+		glColor3d((float)(118 / 255.f), (float)(89 / 255.f), (float)(181 / 255.f));
         glBegin(GL_LINES);
         glVertex2f(a.x_get(),a.y_get());
         glVertex2f(b.x_get(),b.y_get());
@@ -227,6 +246,7 @@ void InsertIntoEdgeTable(Node<Edge>* e, int index)
 
 void createEdgeTable(CPolygon const &polygon)
 {
+
 	Edge emptyEdge;
 
 	for(std::size_t i = 0 ; i < glutGet(GLUT_WINDOW_HEIGHT) ; i++)
@@ -502,39 +522,43 @@ Node<Edge>* updateLCA(Node<Edge>* ptrLCA)
 	return ptrLCA;
 }
 
-void FillingLCALoop(CPolygon const &polygon){
-	createEdgeTable(polygon);
-	Node<Edge>* ptrLCA = NULL;
-	Node<Edge>* currentNode = NULL;
-	bool parity = 1;
-	int cpt = 0;
-	for(int i = 0 ; i < ET.size() ; i++){
-		ptrLCA = InsertNodesIntoLCA(ptrLCA, i);
-		if(ptrLCA != NULL){
-            updateLCA(ptrLCA);
-            ptrLCA = SortLCA(ptrLCA, &compare);
-			ptrLCA = RemoveNodesFromLCA(ptrLCA, i);
-            ptrLCA = RemoveImprecisions(ptrLCA);
-            float indexOpenGL = convertViewportToOpenGLCoordinate(i/(float)glutGet(GLUT_WINDOW_HEIGHT));
-            //currentNode = new Node<Edge>(*ptrLCA);
-            currentNode = ptrLCA;
-            std::vector<Point> vec;
-            if(currentNode->NextNode() == NULL){
-                std:cout << "BLAAAA";
-            }
-            while (currentNode){
-                //if (parity){
-                Point a(currentNode->data.getXMin(), indexOpenGL);
-                //Point b(currentNode->NextNode()->data.getXMin(), indexOpenGL);
-                vec.push_back(a);
-                //vec.push_back(b);
-                //std::cout << a << " " << b << std::endl;
-                currentNode = currentNode->NextNode();
-                //}
+void FillingLCALoop(std::vector<CPolygon> const &polygons){
+
+	for (std::size_t z = 0; z < polygons.size(); ++z)
+	{
+		createEdgeTable(polygons[z]);
+		Node<Edge>* ptrLCA = NULL;
+		Node<Edge>* currentNode = NULL;
+		bool parity = 1;
+		int cpt = 0;
+		for (int i = 0; i < ET.size(); i++){
+			ptrLCA = InsertNodesIntoLCA(ptrLCA, i);
+			if (ptrLCA != NULL){
+				updateLCA(ptrLCA);
+				ptrLCA = SortLCA(ptrLCA, &compare);
+				ptrLCA = RemoveNodesFromLCA(ptrLCA, i);
+				ptrLCA = RemoveImprecisions(ptrLCA);
+				float indexOpenGL = convertViewportToOpenGLCoordinate(i / (float)glutGet(GLUT_WINDOW_HEIGHT));
+				//currentNode = new Node<Edge>(*ptrLCA);
+				currentNode = ptrLCA;
+				std::vector<Point> vec;
+				if (currentNode->NextNode() == NULL){
+				std:cout << "BLAAAA";
+				}
+				while (currentNode){
+					//if (parity){
+					Point a(currentNode->data.getXMin(), indexOpenGL);
+					//Point b(currentNode->NextNode()->data.getXMin(), indexOpenGL);
+					vec.push_back(a);
+					//vec.push_back(b);
+					//std::cout << a << " " << b << std::endl;
+					currentNode = currentNode->NextNode();
+					//}
+				}
+				fillingPoints.push_back(vec);
 			}
-			fillingPoints.push_back(vec);
 		}
-    }
+	}
     /*for(int i = 0; i < fillingPoints.size() ;++i)
     {
         std::cout << i << ": [ " << fillingPoints[i].size() << " ";
@@ -557,7 +581,10 @@ void FillingLCALoop(CPolygon const &polygon){
 
 void clearAll()
 {
-	polygon.clearPoints();
+	for (int i = 0; i < polygons.size(); ++i)
+	{
+		polygons[i].clearPoints();
+	}
 	window.clearPoints();
 	fillingPoints.clear();
 }
@@ -576,7 +603,7 @@ void MouseButton(int button, int state, int x, int y)
             Point p(new_x, new_y);
             
             if(drawMode)
-                polygon.addPoint(p);
+				polygons[currentPolygon].addPoint(p);
             else
                 window.add_point(p);
             
@@ -600,14 +627,14 @@ void keyPressed(unsigned char key, int x, int y)
 {
 	if(key == 13)
 	{
-		CPolygon p = windowing(polygon, window);
-		polygon = p;
+		std::vector<CPolygon> p= windowing(polygons, window);
+		polygons = p;
 	}else if(key == 'c')
 	{
 		clearAll();
 	}else if(key == 'f')
 	{
-		FillingLCALoop(polygon);
+		FillingLCALoop(polygons);
 	}
 }
 
@@ -616,28 +643,34 @@ void update()
 	glutPostRedisplay();
 }
 
-void DrawPolygon(std::vector<Point> points)
+void DrawPolygon()
 {
     //Polygon
 	glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
 	glColor3d((float)(127.f/255.f), (float)(48.f/255.f), (float)(201.f/255.f));
 
-	if(points.size() <= 2){
+	std::vector<Point> points;
+	for (int i = 0; i < polygons.size(); ++i){
 
-		glBegin(GL_LINES);
-		for (std::size_t i = 0; i < points.size()  ; ++i) {
-			glVertex2f(points[i].x_get(), points[i].y_get());
-		}
-		glEnd();
-	}
-	else
-	{
-		glBegin(GL_POLYGON);
+		points = polygons[i].get_points();
 
-		for (std::size_t i = 0; i < points.size()  ; ++i) {
-			glVertex2f(points[i].x_get(), points[i].y_get());
+		if (points.size() <= 2){
+
+			glBegin(GL_LINES);
+			for (std::size_t i = 0; i < points.size(); ++i) {
+				glVertex2f(points[i].x_get(), points[i].y_get());
+			}
+			glEnd();
 		}
-		glEnd();
+		else
+		{
+			glBegin(GL_POLYGON);
+
+			for (std::size_t i = 0; i < points.size(); ++i) {
+				glVertex2f(points[i].x_get(), points[i].y_get());
+			}
+			glEnd();
+		}
 	}
 
     //Window
@@ -681,25 +714,28 @@ void DrawPolygon(std::vector<Point> points)
 }
 
 void selectDraw(int selection) {
+	CPolygon p;
     switch (selection)
     {
         case 11 : drawMode = 1 ;
+			currentPolygon++;
+			polygons.push_back(p);
             break ;
-        case 12 : drawMode = 0 ;
+		case 12: drawMode = 0 ;
             break ;
     }
     glutPostRedisplay();
 }
 
 void selectModify(int selection) {
-	CPolygon p;
+	std::vector<CPolygon> p;
     switch (selection) {
         case 1  :
-			p = windowing(polygon, window);
-			polygon = p;
+			p = windowing(polygons, window);
+			polygons = p;
 			break;
         case 2  :
-			FillingLCALoop(polygon);
+			FillingLCALoop(polygons);
             break ;
         case 0  :
 			exit(0); 
@@ -726,7 +762,7 @@ void renderScene()
     
     
     //    DrawPolygon(window.get_points());
-    DrawPolygon(polygon.get_points());
+    DrawPolygon();
 
 	glutSwapBuffers();
 }
@@ -750,6 +786,9 @@ static void special(int k, int x, int y) {
 
 
 int main(int argc, char **argv) {
+
+	CPolygon p;
+	polygons.push_back(p);
 
     // init GLUT and create Window
 	glutInit(&argc, argv);

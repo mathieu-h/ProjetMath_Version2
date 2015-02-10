@@ -301,19 +301,6 @@ void createEdgeTable(CPolygon const &polygon)
 
 		InsertIntoEdgeTable(node, indexInt);
 	}
-
-	for (int i = 0; i < ET.size(); i++) {
-		if(!ET[i]->data.isEmpty()){
-			std::cout << i << " : ";
-			Node<Edge>* node = ET[i];
-			while(node->NextNode() != NULL)
-			{
-				std::cout << node->data;
-				node = node->NextNode();
-			}
-			std::cout << node->data << std::endl;
-		}
-	}
 }
 
 
@@ -326,9 +313,6 @@ Node<Edge>* InsertNodesIntoLCA(Node<Edge>* ptrLCA, int i){
         float x = edgeET->data.getXMin();
         if(!std::isinf(edgeLCA->data.getSlope())){
             x = (edgeLCA->data.getYMin() - edgeLCA->data.getYIntercept())/(edgeLCA->data.getSlope());
-        }
-        if(x < -1 || x > 1){
-            std::cout << "BLA" << std::endl;
         }
         edgeLCA->data.setXMin(x);
         currentEdgeLCA = edgeLCA;
@@ -553,34 +537,16 @@ void FillingLCALoop(std::vector<CPolygon> const &polygons){
 				currentNode = ptrLCA;
 				std::vector<Point> vec;
 				if (currentNode->NextNode() == NULL){
-				std:cout << "BLAAAA";
 				}
 				while (currentNode){
-					//if (parity){
 					Point a(currentNode->data.getXMin(), indexOpenGL);
-					//Point b(currentNode->NextNode()->data.getXMin(), indexOpenGL);
 					vec.push_back(a);
-					//vec.push_back(b);
-					//std::cout << a << " " << b << std::endl;
 					currentNode = currentNode->NextNode();
-					//}
 				}
 				fillingPoints.push_back(vec);
 			}
 		}
 	}
-    /*for(int i = 0; i < fillingPoints.size() ;++i)
-    {
-        std::cout << i << ": [ " << fillingPoints[i].size() << " ";
-        for (int j = 0; j < fillingPoints[i].size(); j++)
-        {
-            std::cout << fillingPoints[i][j] << " , ";
-        }
-        std::cout << " ] " << std::endl;
-    }*/
-    //ptrLCA = RemoveNodesFromLCA(ptrLCA, j);
-    //ptrLCA = SortLCA(ptrLCA, &compare);
-    //std::cout << ptrLCA;
 }
 
 
@@ -591,10 +557,10 @@ void FillingLCALoop(std::vector<CPolygon> const &polygons){
 
 void clearAll()
 {
-	for (int i = 0; i < polygons.size(); ++i)
-	{
-		polygons[i].clearPoints();
-	}
+	polygons.clear();
+	CPolygon p;
+	polygons.push_back(p);
+	currentPolygon = 0;
 	window.clearPoints();
 	fillingPoints.clear();
 }
@@ -605,7 +571,6 @@ void MouseButton(int button, int state, int x, int y)
 	{
 		if(state == GLUT_DOWN)
 		{
-			//std::cout << x << " " << y << std::endl;
 			float new_x = convertViewportToOpenGLCoordinate(x/(float)glutGet(GLUT_WINDOW_WIDTH));
 
 			float new_y = -convertViewportToOpenGLCoordinate(y/(float)glutGet(GLUT_WINDOW_HEIGHT));
@@ -617,7 +582,6 @@ void MouseButton(int button, int state, int x, int y)
             else
                 window.add_point(p);
             
-			//std::cout << p << std::endl;
 		}
 	}
 	else if(button == GLUT_RIGHT_BUTTON)
@@ -628,7 +592,6 @@ void MouseButton(int button, int state, int x, int y)
 			index = convertOpenGLToViewportCoordinate(index);
 			index *= glutGet(GLUT_WINDOW_HEIGHT);
 
-			std::cout << y << std::endl;
 		}
 	}
 }
@@ -728,8 +691,10 @@ void selectDraw(int selection) {
     switch (selection)
     {
         case 11 : drawMode = 1 ;
-			currentPolygon++;
-			polygons.push_back(p);
+			if (polygons[currentPolygon].get_points().size() > 2){
+				polygons.push_back(p);
+				currentPolygon++;
+			}
             break ;
 		case 12: drawMode = 0 ;
             break ;

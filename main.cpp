@@ -123,11 +123,25 @@ std::vector<CPolygon> windowing(const std::vector<CPolygon> polygons, const Wind
 	std::vector<Point> points_window = window.get_points();
 	points_window.push_back(points_window.front());
 
+	Point a = points_window[0];
+	Point b = points_window[1];
+	Point c = points_window[2];
+
+	float matrix[2][2];
+
+	matrix[0][0] = (b.x_get() - a.x_get());
+	matrix[0][1] = (b.y_get() - a.y_get());
+	matrix[1][0] = (c.x_get() - a.x_get());
+	matrix[1][1] = (c.y_get() - a.y_get());
+	
+	float det = determinant(matrix);
+	if (det > 0)
+		std::reverse(points_window.begin(), points_window.end());
+
 	std::vector<CPolygon> polygonsNew;
 
 	for (std::size_t z = 0; z < polygons.size(); ++z)
 	{
-
 		CPolygon polygonNew;
 		std::vector<Point> points_polygon = polygons[z].get_points();
 		if (points_polygon.size() < 3)
@@ -148,10 +162,6 @@ std::vector<CPolygon> windowing(const std::vector<CPolygon> polygons, const Wind
 					{
 
 					}
-				}
-				if (points_polygon.size() == 0)
-				{
-					break;
 				}
 				if (visible(points_polygon[j], points_window[i], points_window[i + 1]))
 				{
